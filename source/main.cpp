@@ -3,44 +3,73 @@
 #include <cmath>
 #include <vector>
 #include "../headers/power-table.hpp"
+#include "../headers/slinky-primitives.hpp"
 
-int main()
+int main( int argc, char* argv[] )
 {
-    for( unsigned int i = 1; i < 9; i++ )
+    InitTable();
+
+    std::vector< unsigned char > key = LoadKey( std::string( argv[1] ) );
+
+    std::vector< unsigned char > data = LoadKey( std::string( argv[ 2 ] ) );
+
+    std::vector< unsigned char > dataCopy( data );
+
+    int keyPosition = 0;
+
+    AddKey( data, keyPosition, key );
+
+    AddKey( data, keyPosition, key );
+
+    std::cout << "Add Key and Inverse Add Key verification" << std::endl;
+
+    for( unsigned int i = 0; i < data.size(); ++i )
     {
-        for( int j = 0; j < 256; ++j )
+        if( data[ i ] != dataCopy[ i ] )
         {
-            std::cout << (int)FindNthRoot( powerTable[ (i-1) * 256 + j ], i ) << std::endl;
+            std::cout << "not equal" << std::endl;
+
+            exit(1);
         }
     }
 
-    /*
-    int counter = 0;
+    std::cout << "Verified" << std::endl;
 
-    std::vector < uint64_t > lookupTable;
+    keyPosition = DataChain( data, keyPosition, key );
 
-    lookupTable.resize(8*256);
+    keyPosition = InverseDataChain( data, keyPosition, key );
 
-    for( uint64_t i = 0; i < 8; ++i )
+    std::cout << "Data Chain and Inverse Data Chain verification" << std::endl;
+
+    for( unsigned int i = 0; i < data.size(); ++i )
     {
-        for( uint64_t j = 0; j < 256; ++j )
+        if( data[ i ] != dataCopy[ i ] )
         {
-            lookupTable[ i * 256 + j ] = 1;
+            std::cout << "not equal" << std::endl;
 
-            for( unsigned int k = 0; k <= i; ++k )
-            {
-                lookupTable[ i * 256 + j ] *= j;
-            }
+            exit(1);
         }
     }
 
-    std::cout << "uint64_t expansionTable = { ";
+    std::cout << "Verified" << std::endl;
 
-    for( unsigned int i = 0; i < lookupTable.size(); ++i )
+    std::cout << "Whiten and Blacken verification" << std::endl;
+
+    keyPosition = Whiten( data, keyPosition, key );
+
+    std::cout << "Key Position: " << keyPosition << std::endl;
+
+    Blacken( data, keyPosition, key );
+
+    for( unsigned int i = 0; i < data.size(); ++i )
     {
-        std::cout << "\t" << lookupTable[ i ] << ",\n";
+        if( data[ i ] != dataCopy[ i ] )
+        {
+            std::cout << "not equal" << std::endl;
+
+            exit(1);
+        }
     }
 
-    std::cout << "}";
-    */
+    std::cout << "Verified" << std::endl;
 }
