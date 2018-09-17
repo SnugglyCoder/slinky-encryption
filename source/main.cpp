@@ -32,7 +32,7 @@ int main( int argc, char* argv[] )
             exit(1);
         }
     }
-
+    
     std::cout << "Verified" << std::endl;
 
     keyPosition = DataChain( data, keyPosition, key );
@@ -57,9 +57,25 @@ int main( int argc, char* argv[] )
 
     keyPosition = Whiten( data, keyPosition, key );
 
-    std::cout << "Key Position: " << keyPosition << std::endl;
-
     Blacken( data, keyPosition, key );
+
+    for( unsigned int i = 0; i < data.size(); ++i )
+    {
+        if( data[ i ] != dataCopy[ i ] )
+        {
+            std::cout << "not equal" << std::endl;
+
+            exit(1);
+        }
+    }
+
+    std::cout << "Verified" << std::endl;
+
+    std::cout << "SubBytes and Inverse SubBytes Verification" << std::endl;
+    
+    keyPosition = SubBytes( data, keyPosition, key );
+
+    InverseSubBytes( data, keyPosition, key );
 
     for( unsigned int i = 0; i < data.size(); ++i )
     {
