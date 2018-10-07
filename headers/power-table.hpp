@@ -2067,8 +2067,6 @@ void InitTable()
 // The index is equal to power * 256 + answer
 unsigned char FindNthRoot( const uint64_t radicand, const unsigned char originalPower )
 {
-	//std::cout << "radicand: " << radicand << "\n";
-	//std::cout << "power: " << (int)originalPower << "\n";
 	int left = 0;
 
 	int right = 256;
@@ -2077,14 +2075,9 @@ unsigned char FindNthRoot( const uint64_t radicand, const unsigned char original
 	{
 		int middle = left + ( right - left ) / 2;
 
-		//std::cout << powerTable[ originalPower - 1 ][ middle ] << " ";
-
 		if( powerTable[ originalPower - 1 ][ middle ] == radicand )
 		{
-			//std::cout << "middle: " << middle << std::endl;
-			//return (unsigned char)( middle / 256 * ( originalPower ) );
-			//std::cout << std::endl;
-			return 1;
+			return (unsigned char)middle;
 		}
 
 		else if( powerTable[ originalPower - 1 ][ middle ] > radicand )
@@ -2098,8 +2091,6 @@ unsigned char FindNthRoot( const uint64_t radicand, const unsigned char original
 		}
 	}
 
-	std::cout << std::endl;
-
 	return 0;
 }
 
@@ -2108,13 +2099,15 @@ unsigned char FindNthRoot( const uint64_t radicand, const unsigned char original
 // Returns and array of bytes that has size equal to power, which ranges 1-8
 std::vector< unsigned char > ExpandByte( unsigned char byteValue, unsigned char power )
 {
+	std::cout << "Power is " << (int)power << std::endl;
+
 	uint64_t result = powerTable[ power - 1 ][ byteValue ];
 
 	std::vector< unsigned char > resultBytes( power );
 
 	for( int i = 0; i < power; ++i )
 	{
-		resultBytes[ power - i ] = (result >> ( i * 8 ) );
+		resultBytes[ power - i ] = ( result >> ( i * 8 ) );
 	}
 
 	return resultBytes;

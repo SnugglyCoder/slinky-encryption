@@ -78,7 +78,7 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 		for( int bit = 0; bit < 3; ++bit )
 		{
 			unsigned char keyByte = key[ ( keyPosition + keyBitOffset / 8 ) % key.size() ];
-
+			
 			keyByte &= 1 >> ( keyBitOffset % 8 );
 
 			power |= keyByte;
@@ -86,7 +86,7 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 			keyBitOffset++;
 		}
 
-		std::vector< unsigned char > expandedByte = ExpandByte( data[ i ], power );
+		std::vector< unsigned char > expandedByte = ExpandByte( data[ i ], power + 1 );
 
 		for( int j = 0; j < expandedByte.size(); ++j )
 		{
