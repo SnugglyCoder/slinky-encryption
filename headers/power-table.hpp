@@ -2105,6 +2105,8 @@ std::vector< unsigned char > ExpandByte( unsigned char byteValue, unsigned char 
 
 	std::vector< unsigned char > resultBytes( power );
 
+	// Copy only power bytes from result into the array to return
+	// Without this it will always result in 8x expansion, not desirable
 	for( int i = 0; i < power; ++i )
 	{
 		resultBytes[ power - i ] = ( result >> ( i * 8 ) );

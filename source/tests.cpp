@@ -7,8 +7,14 @@
 
 int main( int argc, char* argv[] )
 {
-    InitTable();
+    if( argc != 3 )
+    {
+        std::cerr << "Usage: ./tests < key file >    < data file >" << std::endl;
 
+        exit(1);
+    }
+
+    InitTable();
 
     std::cout << "Unit Tests" << std::endl;
 

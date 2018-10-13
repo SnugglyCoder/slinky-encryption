@@ -65,28 +65,32 @@ int Blacken( std::vector< unsigned char >& data, int keyPosition, const std::vec
 	return AddKey( data, ( data.size() - keyPosition ) % key.size(), key );
 }
 
+// Expands the message by using the message as the power and the key as the base and performing an exponentiation
+// This allows changes in the message to create changes in size very easily. 
 int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
 {
 	std::vector< unsigned char > expandedData;
 
-	int keyBitOffset = 0;
-
-	for( unsigned int i = 0; i < data.size(); ++i )
+	for( int dataBitOffset = 0; dataBitOffset < data.size() * 8 - 3; ++dataBitOffset )
 	{
 		unsigned char power = 0x00;
 
 		for( int bit = 0; bit < 3; ++bit )
 		{
-			unsigned char keyByte = key[ ( keyPosition + keyBitOffset / 8 ) % key.size() ];
+			unsigned char dataByte = data[ dataBitOffset / 8 ];
 			
-			keyByte &= 1 >> ( keyBitOffset % 8 );
+			unsigned char bitValue = 0x00;
 
-			power |= keyByte;
+			bitValue |= ( (1 >> dataBitOffset % 8 ) | dataByte );
 
-			keyBitOffset++;
+			dataBitOffset++;
+
+			std::printf( "PowerByte: %x\n", power );
 		}
 
-		std::vector< unsigned char > expandedByte = ExpandByte( data[ i ], power + 1 );
+		std::vector< unsigned char > expandedByte = ExpandByte( key[ keyPosition ], power + 1 );
+
+		keyPosition = ( keyPosition + 1 ) % key.size();
 
 		for( int j = 0; j < expandedByte.size(); ++j )
 		{
@@ -96,7 +100,7 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 
 	data = expandedData;
 
-	return ( ( keyPosition + keyBitOffset / 8 ) + 1 )% key.size();
+	return ( keyPosition + 1 )% key.size();
 }
 
 int Shrink( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
