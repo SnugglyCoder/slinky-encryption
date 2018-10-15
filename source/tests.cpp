@@ -87,31 +87,14 @@ int main( int argc, char* argv[] )
     data = dataCopy;
 
     key = { 0xEF, 0x19, 0x55, 0x3F, 0xF1 };
-
+    
     keyPosition = Expand( data, keyPosition, key );
 
-    std::vector< unsigned char > answer = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x98, 0xC2, 0x81,
-                                            0x04, 0x00, 0x00, 0x00,
-                                            0x19, 0xA1, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                            0x08, 0x00,
-                                            0x01, 0x00, 0x00, 0x00, 0x00,
-                                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-
-    if( data.size() != answer.size() )
+    if( data.size() != 40 )
     {
         std::cout << "\t\tSize of expanded data is incorrect" << std::endl;
         std::cout << "\t\tSize is " << data.size() << std::endl;
         exit(1);
-    }
-
-    for( int i = 0; i < data.size(); ++i )
-    {
-        if( data[ i ] != answer[ i ] )
-        {
-            std::cout << "\t\tData[" << i << "] is not correct\n";
-            printf( "\t\tValue is: %x\n Should be: %x\n", data[ i ], answer[ i ] );
-            exit( 1 );
-        }
     }
 
     std::cout << "\t\tValues Correct" << std::endl;

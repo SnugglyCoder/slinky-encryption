@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <bitset>
 
 #include "sbox.hpp"
 #include "power-table.hpp"
@@ -71,21 +72,27 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 {
 	std::vector< unsigned char > expandedData;
 
-	for( int dataBitOffset = 0; dataBitOffset < data.size() * 8 - 3; ++dataBitOffset )
+	int keyBitOffset = 0;
+
+	for( int dataByte = 0; dataByte < data.size; ++dataByte )
 	{
 		unsigned char power = 0x00;
 
 		for( int bit = 0; bit < 3; ++bit )
 		{
-			unsigned char dataByte = data[ dataBitOffset / 8 ];
+			unsigned char keyByte = key[ (keyPosition + keyBitOffset / 8) % key.size() ];
 			
 			unsigned char bitValue = 0x00;
 
-			bitValue |= ( (1 >> dataBitOffset % 8 ) | dataByte );
+			bitValue |= ( (0x80 >> keyBitOffset % 8 ) & dataByte );
 
-			dataBitOffset++;
+			bitValue >>= ( 7 - keyBitOffset % 8 );
 
-			std::printf( "PowerByte: %x\n", power );
+			bitValue <<= 2 - bit;
+
+			power |= bitValue;
+		
+			keyBitOffset++;
 		}
 
 		std::vector< unsigned char > expandedByte = ExpandByte( key[ keyPosition ], power + 1 );
