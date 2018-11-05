@@ -16,13 +16,76 @@ int main( int argc, char* argv[] )
 
     InitTable();
 
-    std::cout << "Unit Tests" << std::endl;
-
     std::vector< unsigned char > key = { 0x00, 0x01, 0x02, 0x03, 0xF1 };
 
     std::vector< unsigned char > data = { 0xF0, 0x04, 0x03, 0x02, 0x01, 0x00 };
 
     std::vector< unsigned char > dataCopy( data );
+
+    std::ifstream file("pride_and_prejudice.txt", std::ios::ate | std::ios::binary );
+
+    std::vector< unsigned char > filedata( file.tellg() );
+
+    file.seekg( 0 );
+
+    file.read( (char*)&filedata[0], filedata.size() );
+
+    std::vector< unsigned char > filedatacopy( filedata );
+
+    std::cout << "Size before compression: " << filedata.size() << std::endl;
+
+   // CompressData( filedata );
+
+    std::cout << "Size after compression: " << filedata.size() << std::endl;
+
+   // DecompressData( filedata );
+
+    std::cout << "Size after decompression: " << filedata.size() << std::endl;
+
+    for( unsigned int i = 0; i < filedata.size(); i++ )
+    {
+        if( filedata[ i ] != filedatacopy[ i ] )
+        {
+            std::cout << "Not the same" << std::endl;
+        }
+    }
+
+    std::cout << "Shuffling" << std::endl;
+
+    std::vector< unsigned char > shuffleKey;
+
+    for( unsigned int i = 0; i < 13426; i++ )
+    {
+        shuffleKey.push_back( filedata[ i ] );
+    }
+
+    int keystart = 684759 % shuffleKey.size();
+
+    int keyposition = keystart;
+
+    std::cout << keyposition << std::endl;
+
+    filedata = ShuffleBits( filedata, shuffleKey, keyposition );
+
+    std::cout << "Shuffled" << std::endl;
+
+    filedata = UnshuffleBits( filedata, shuffleKey, keyposition );
+
+    std::cout << "Unshuffled" << std::endl;
+
+    int diffbits = 0;
+
+    for( unsigned int i = 0; i < filedata.size(); i++ )
+    {
+        if(filedata[i] != filedatacopy[i])
+        {
+            diffbits++;
+        }
+    }
+
+    std::cout << "Difference: " << diffbits << std::endl;
+
+    std::cout << "Unit Tests" << std::endl;
 
     int keyPosition = 0;
 
