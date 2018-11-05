@@ -91,20 +91,83 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 			
 			unsigned char bitValue = 0x00;
 
-			bitValue |= ( (0x80 >> keyBitOffset % 8 ) & dataByte );
+			bitValue |= ( (0x80 >> keyBitOffset % 8 ) & keyByte );
 
 			bitValue >>= ( 7 - keyBitOffset % 8 );
+
+			std::cout << std::bitset<8>(bitValue) << std::endl;
 
 			bitValue <<= 2 - bit;
 
 			power |= bitValue;
-		
+
 			keyBitOffset++;
 		}
 
-		std::vector< unsigned char > expandedByte = ExpandByte( key[ keyPosition ], power + 1 );
+		// 111 011 110 001 100 101 010 101 001 111 111 111 000 1
 
-		keyPosition = ( keyPosition + 1 ) % key.size();
+		std::cout << "Final: " << std::bitset<8>(power) << std::endl;
+
+		std::vector< unsigned char > expandedByte = ExpandByte( data[ dataByte ], power + 1 );
+
+		for( int j = 0; j < expandedByte.size(); ++j )
+		{
+			expandedData.push_back( expandedByte[ j ] );
+		}
+	}
+
+	std::cout << (keyBitOffset) << " " << data.size() << std::endl;
+
+	data = expandedData;
+
+	return ( keyPosition + data.size() * 3 )% key.size();
+}
+
+int Unexpand( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
+{
+	std::vector< unsigned char > expandedData;
+
+	int datasize = data.size() * 3;
+
+	keyPosition = (keyPosition - datasize);
+
+	while( keyPosition < 0 )
+	{
+		keyPosition += key.size();
+	}
+
+	keyPosition %= key.size();
+
+	int keyBitOffset = 0;
+
+	for( int dataByte = 0; dataByte < data.size(); ++dataByte )
+	{
+		unsigned char power = 0x00;
+
+		for( int bit = 0; bit < 3; ++bit )
+		{
+			unsigned char keyByte = key[ (keyPosition + keyBitOffset / 8) % key.size() ];
+			
+			unsigned char bitValue = 0x00;
+
+			bitValue |= ( (0x80 >> keyBitOffset % 8 ) & keyByte );
+
+			bitValue >>= ( 7 - keyBitOffset % 8 );
+
+			std::cout << std::bitset<8>(bitValue) << std::endl;
+
+			bitValue <<= 2 - bit;
+
+			power |= bitValue;
+
+			keyBitOffset++;
+		}
+
+		// 111 011 110 001 100 101 010 101 001 111 111 111 000 1
+
+		std::cout << "Final: " << std::bitset<8>(power) << std::endl;
+
+		std::vector< unsigned char > expandedByte = ExpandByte( data[ dataByte ], power + 1 );
 
 		for( int j = 0; j < expandedByte.size(); ++j )
 		{
@@ -114,7 +177,7 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 
 	data = expandedData;
 
-	return ( keyPosition + 1 )% key.size();
+	return ( keyPosition + keyBitOffset / 8 )% key.size();
 }
 
 int Shrink( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
@@ -239,38 +302,10 @@ void DecompressData(std::vector< unsigned char >& data)
 	}
 }
 
-std::vector< unsigned char > ShuffleBits( const std::vector< unsigned char >& data, const std::vector< unsigned char >& key, int& keyPosition )
+void DeteremineInOut( unsigned char keyByte, bool& currentInputLeft,	bool& currentInputEnd, bool& currentOutputLeft, bool& currentOutputEnd, int*& inputBit, int*& outputBit,
+					  int& ile, int& ire, int& ilm, int& irm, int& ole, int& ore, int& olm, int& orm )
 {
-	std::vector< unsigned char > shuffledBits( data.size(), 0x00 );
-
-	int ile = -1;
-	int ire = (data.size() - 1 ) * 8 + 8;
-	int ilm = ire / 2 + 1;
-	int irm = ilm - 1;
-	int ole = ile;
-	int ore = ire;
-	int olm = ilm;
-	int orm = irm;
-
-	int* inputBit = &ile;
-	int* outputBit = &ole;
-
-	bool currentInputLeft = 1;
-	bool currentInputEnd = 1;
-
-	bool currentOutputLeft = 1;
-	bool currentOutputEnd = 1;
-
-	std::vector< int > inputBits;
-	std::vector< int > outputBits;
-
-	for( int keyBit = 0; keyBit < data.size() * 4 * 8; keyBit += 4 )
-	{
-		unsigned char keyByte = key[ ( ( keyPosition + keyBit )  / 8 ) % key.size() ];
-
-		keyByte >>= ( 4 * ( ( keyBit % 8 ) / 4 ) );
-
-		if( keyByte & 0x08 )
+	if( keyByte & 0x08 )
 		{
 			currentInputLeft = !currentInputLeft;
 		}
@@ -421,6 +456,41 @@ std::vector< unsigned char > ShuffleBits( const std::vector< unsigned char >& da
 				}
 			}
 		}
+}
+
+std::vector< unsigned char > ShuffleBits( const std::vector< unsigned char >& data, const std::vector< unsigned char >& key, int& keyPosition )
+{
+	std::vector< unsigned char > shuffledBits( data.size(), 0x00 );
+
+	int ile = -1;
+	int ire = (data.size() - 1 ) * 8 + 8;
+	int ilm = ire / 2 + 1;
+	int irm = ilm - 1;
+	int ole = ile;
+	int ore = ire;
+	int olm = ilm;
+	int orm = irm;
+
+	int* inputBit = &ile;
+	int* outputBit = &ole;
+
+	bool currentInputLeft = 1;
+	bool currentInputEnd = 1;
+
+	bool currentOutputLeft = 1;
+	bool currentOutputEnd = 1;
+
+	std::vector< int > inputBits;
+	std::vector< int > outputBits;
+
+	for( int keyBit = 0; keyBit < data.size() * 4 * 8; keyBit += 4 )
+	{
+		unsigned char keyByte = key[ ( ( keyPosition + keyBit )  / 8 ) % key.size() ];
+
+		keyByte >>= ( 4 * ( ( keyBit % 8 ) / 4 ) );
+
+		DeteremineInOut(keyByte, currentInputLeft, currentInputEnd, currentOutputLeft, currentOutputEnd, inputBit, outputBit,
+					    ile, ire, ilm, irm, ole, ore, olm, orm );
 
 		unsigned char inputByte = data[ *inputBit / 8 ];
 		
@@ -455,6 +525,8 @@ std::vector< unsigned char > UnshuffleBits( const std::vector< unsigned char >& 
 
 	keyPosition %= key.size();
 
+	std::cout << keyPosition << std::endl;
+
 	int ile = -1;
 	int ire = (data.size() - 1 ) * 8 + 8;
 	int ilm = ire / 2 + 1;
@@ -480,162 +552,10 @@ std::vector< unsigned char > UnshuffleBits( const std::vector< unsigned char >& 
 	{
 		unsigned char keyByte = key[ ( ( keyPosition + keyBit )  / 8 ) % key.size() ];
 
-		//std::cout << ( ( keyPosition + keyBit )  / 8 ) % key.size() << std::endl;
-
 		keyByte >>= ( 4 * ( ( keyBit % 8 ) / 4 ) );
 
-		if( keyByte & 0x08 )
-		{
-			currentInputLeft = !currentInputLeft;
-		}
-
-		if( keyByte & 0x04 )
-		{
-			currentInputEnd = !currentInputEnd;
-		}
-
-		if( keyByte & 0x02 )
-		{
-			currentOutputLeft = !currentOutputLeft;
-		}
-
-		if( keyByte & 0x01 )
-		{
-			currentOutputEnd = !currentOutputEnd;
-		}
-
-		if( currentOutputEnd )
-		{
-			if( currentOutputLeft )
-			{
-				if( ole < olm-1 )
-				{
-					outputBit = &ole;
-					ole++;
-				}
-
-				else
-				{
-					outputBit = &ore;
-					ore--;
-				}
-			}
-
-			else
-			{
-				if( orm < ore-1 )
-				{
-					outputBit = &ore;
-					ore--;
-				}
-
-				else
-				{
-					outputBit = &ole;
-					ole++;
-				}
-			}
-		}
-
-		else
-		{
-			if( currentOutputLeft )
-			{
-				if( ole < olm-1 )
-				{
-					outputBit = &olm;
-					olm--;
-				}
-
-				else
-				{
-					outputBit = &orm;
-					orm++;
-				}
-			}
-
-			else
-			{
-				if( orm < ore-1 )
-				{
-					outputBit = &orm;
-					orm++;
-				}
-
-				else
-				{
-					outputBit = &olm;
-					olm--;
-				}
-			}
-		}
-
-		if( currentInputEnd )
-		{
-			if( currentInputLeft )
-			{
-				if( ile < ilm-1 )
-				{
-					inputBit = &ile;
-					ile++;
-				}
-
-				else
-				{
-					inputBit = &ire;
-					ire--;
-				}
-			}
-
-			else
-			{
-				if( irm < ire-1 )
-				{
-					inputBit = &ire;
-					ire--;
-				}
-
-				else
-				{
-					inputBit = &ile;
-					ile++;
-				}
-			}
-		}
-
-		else
-		{
-			if( currentInputLeft )
-			{
-				if( ile < ilm-1 )
-				{
-					inputBit = &ilm;
-					ilm--;
-					
-				}
-
-				else
-				{
-					inputBit = &irm;
-					irm++;
-				}
-			}
-
-			else
-			{
-				if( irm < ire-1 )
-				{
-					inputBit = &irm;
-					irm++;
-				}
-
-				else
-				{
-					inputBit = &ilm;
-					ilm--;
-				}
-			}
-		}
+		DeteremineInOut(keyByte, currentInputLeft, currentInputEnd, currentOutputLeft, currentOutputEnd, inputBit, outputBit,
+					    ile, ire, ilm, irm, ole, ore, olm, orm );
 
 		unsigned char inputByte = data[ *outputBit / 8 ];
 		

@@ -9,7 +9,7 @@ int main( int argc, char* argv[] )
 {
     if( argc != 3 )
     {
-        std::cerr << "Usage: ./tests < key file >    < data file >" << std::endl;
+        std::cerr << "Usage: ./tests < key file > < data file >" << std::endl;
 
         exit(1);
     }
@@ -59,25 +59,27 @@ int main( int argc, char* argv[] )
         shuffleKey.push_back( filedata[ i ] );
     }
 
+    std::vector< unsigned char > shufflekeycopy( shuffleKey );
+
     int keystart = 684759 % shuffleKey.size();
 
     int keyposition = keystart;
 
     std::cout << keyposition << std::endl;
 
-    filedata = ShuffleBits( filedata, shuffleKey, keyposition );
+    shuffleKey = ShuffleBits(  shuffleKey, filedata, keyposition );
 
     std::cout << "Shuffled" << std::endl;
 
-    filedata = UnshuffleBits( filedata, shuffleKey, keyposition );
+    shuffleKey = UnshuffleBits(  shuffleKey, filedata, keyposition );
 
     std::cout << "Unshuffled" << std::endl;
 
     int diffbits = 0;
 
-    for( unsigned int i = 0; i < filedata.size(); i++ )
+    for( unsigned int i = 0; i < shuffleKey.size(); i++ )
     {
-        if(filedata[i] != filedatacopy[i])
+        if(shuffleKey[i] != shufflekeycopy[i])
         {
             diffbits++;
         }
@@ -151,9 +153,20 @@ int main( int argc, char* argv[] )
 
     key = { 0xEF, 0x19, 0x55, 0x3F, 0xF1 };
     
+    for( int i = 0; i < key.size(); i++ )
+    {
+        std::cout << std::bitset<8>(key[i]) << " ";
+    }
+
+    // 111 011 110 001 100 101 010 101 001 111 111 111 000 1
+
+    std::cout << std::endl;
+
+    keyPosition = 0;
+
     keyPosition = Expand( data, keyPosition, key );
 
-    if( data.size() != 40 )
+    if( data.size() != 32 )
     {
         std::cout << "\t\tSize of expanded data is incorrect" << std::endl;
         std::cout << "\t\tSize is " << data.size() << std::endl;
