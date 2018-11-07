@@ -30,21 +30,33 @@ int AddKey( std::vector< unsigned char >& data, const int keyPosition, const std
 	return ( i + keyPosition ) % key.size();
 }
 
+int InverseAddKey( std::vector< unsigned char >& data, const int keyPosition, const std::vector< unsigned char >& key )
+{
+	int i = 0;
+
+	for( i; i < data.size(); i++ )
+	{
+		data[ i ] ^= key[ ( keyPosition - i ) % key.size() ];
+	}
+
+	return ( keyPosition - i ) % key.size();
+}
+
 // XOR the last byte of data with current key byte
 // Chain this back through to the beginning of the message
-int DataChain( std::vector< unsigned char >& data, const int keyPosition, const std::vector< unsigned char >& key )
+int ForwardChain( std::vector< unsigned char >& data, const int keyPosition, const std::vector< unsigned char >& key )
 {
-	data[ data.size() - 1 ] ^= key[ keyPosition ];
+	data[ 0 ] ^= key[ keyPosition ];
 
-	for( int i = data.size() - 2; i >= 0; --i )
+	for( int i = 1; i < data.size() - 1; i++ )
 	{
-		data[ i ] ^= data[ i + 1 ];
+		data[ i + 1 ] ^= data[ i ];
 	}
 
 	return keyPosition + 1;
 }
 
-int InverseDataChain( std::vector< unsigned char >& data, int keyPosition, const std::vector < unsigned char >& key )
+int InverseForwardChain( std::vector< unsigned char >& data, int keyPosition, const std::vector < unsigned char >& key )
 {
 	keyPosition -= 1;
 
@@ -58,19 +70,30 @@ int InverseDataChain( std::vector< unsigned char >& data, int keyPosition, const
 	return keyPosition;
 }
 
-// Add key then chain the data blocks
-int Whiten( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
+int ReverseChain( std::vector< unsigned char >& data, const int keyPosition, const std::vector< unsigned char >& key )
 {
-	keyPosition = AddKey( data, keyPosition, key );
+	data[ data.size() - 1 ] ^= key[ keyPosition ];
 
-	return DataChain( data, keyPosition, key );
+	for( int i = data.size() - 2; i >= 0; --i )
+	{
+		data[ i ] ^= data[ i + 1 ];
+	}
+
+	return keyPosition + 1;
 }
 
-int Blacken( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char > & key )
+int InverseReverseChain( std::vector< unsigned char >& data, int keyPosition, const std::vector < unsigned char >& key )
 {
-	keyPosition = InverseDataChain( data, keyPosition, key );
-	
-	return AddKey( data, ( data.size() - keyPosition ) % key.size(), key );
+	keyPosition -= 1;
+
+	for( int i = 0; i < data.size() - 1; ++i )
+	{
+		data[ i ] ^= data[ i + 1 ];
+	}
+
+	data[ data.size() - 1 ] ^= key[ keyPosition ];
+
+	return keyPosition;
 }
 
 // Expands the message by using the message as the power and the key as the base and performing an exponentiation
@@ -95,18 +118,12 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 
 			bitValue >>= ( 7 - keyBitOffset % 8 );
 
-			std::cout << std::bitset<8>(bitValue) << std::endl;
-
 			bitValue <<= 2 - bit;
 
 			power |= bitValue;
 
 			keyBitOffset++;
 		}
-
-		// 111 011 110 001 100 101 010 101 001 111 111 111 000 1
-
-		std::cout << "Final: " << std::bitset<8>(power) << std::endl;
 
 		std::vector< unsigned char > expandedByte = ExpandByte( data[ dataByte ], power + 1 );
 
@@ -116,8 +133,6 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 		}
 	}
 
-	std::cout << (keyBitOffset) << " " << data.size() << std::endl;
-
 	data = expandedData;
 
 	return ( keyPosition + data.size() * 3 )% key.size();
@@ -125,7 +140,7 @@ int Expand( std::vector< unsigned char >& data, int keyPosition, const std::vect
 
 int Unexpand( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
 {
-	std::vector< unsigned char > expandedData;
+	std::vector< unsigned char > collapsedData;
 
 	int datasize = data.size() * 3;
 
@@ -140,7 +155,9 @@ int Unexpand( std::vector< unsigned char >& data, int keyPosition, const std::ve
 
 	int keyBitOffset = 0;
 
-	for( int dataByte = 0; dataByte < data.size(); ++dataByte )
+	int dataByte = 0;
+
+	while( dataByte < data.size() )
 	{
 		unsigned char power = 0x00;
 
@@ -154,8 +171,6 @@ int Unexpand( std::vector< unsigned char >& data, int keyPosition, const std::ve
 
 			bitValue >>= ( 7 - keyBitOffset % 8 );
 
-			std::cout << std::bitset<8>(bitValue) << std::endl;
-
 			bitValue <<= 2 - bit;
 
 			power |= bitValue;
@@ -163,33 +178,21 @@ int Unexpand( std::vector< unsigned char >& data, int keyPosition, const std::ve
 			keyBitOffset++;
 		}
 
-		// 111 011 110 001 100 101 010 101 001 111 111 111 000 1
+		uint64_t radicand = 0x0000000000000000;
 
-		std::cout << "Final: " << std::bitset<8>(power) << std::endl;
-
-		std::vector< unsigned char > expandedByte = ExpandByte( data[ dataByte ], power + 1 );
-
-		for( int j = 0; j < expandedByte.size(); ++j )
+		for( uint64_t byte = 0; byte <= power; byte++ )
 		{
-			expandedData.push_back( expandedByte[ j ] );
+			radicand |= (uint64_t((data[ dataByte + power - byte ])) << ( byte * 8 ));
 		}
+
+		dataByte += power + 1;
+
+		collapsedData.push_back( FindNthRoot( radicand, power + 1 ) );
 	}
 
-	data = expandedData;
+	data = collapsedData;
 
-	return ( keyPosition + keyBitOffset / 8 )% key.size();
-}
-
-int Shrink( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
-{
-	std::vector< unsigned char > shrunkData;
-
-	int keyBitOffset = 0;
-
-	for( int i = 0; i < data.size(); ++i )
-	{
-		unsigned char keyByte = key[ ( keyPosition + keyBitOffset / 8 ) % key.size() ];
-	}
+	return keyPosition;
 }
 
 // Use Rijndael sbox to sub bytes

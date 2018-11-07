@@ -152,13 +152,6 @@ int main( int argc, char* argv[] )
     data = dataCopy;
 
     key = { 0xEF, 0x19, 0x55, 0x3F, 0xF1 };
-    
-    for( int i = 0; i < key.size(); i++ )
-    {
-        std::cout << std::bitset<8>(key[i]) << " ";
-    }
-
-    // 111 011 110 001 100 101 010 101 001 111 111 111 000 1
 
     std::cout << std::endl;
 
@@ -173,7 +166,17 @@ int main( int argc, char* argv[] )
         exit(1);
     }
 
-    std::cout << "\t\tValues Correct" << std::endl;
+    keyPosition = Unexpand( data, keyPosition, key );
+
+    for( int i = 0; i < data.size(); i++ )
+    {
+        if( data[ i ] != dataCopy[ i ] )
+        {
+            std::cout << "unexpand failed!" << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
 
     key = LoadKey( std::string( argv[1] ) );
 

@@ -7,6 +7,12 @@
 
 int main( int argc, char* argv[] )
 {
+    if( argc != 4 )
+    {
+        std::cout << "Usage: ./slinky <key> <input> <output>" << std::endl;
+        exit(1);
+    }
+
     InitTable();
 
     std::vector< unsigned char > key = LoadKey( std::string( argv[1] ) );
@@ -17,75 +23,5 @@ int main( int argc, char* argv[] )
 
     int keyPosition = 0;
 
-    AddKey( data, keyPosition, key );
-
-    AddKey( data, keyPosition, key );
-
-    std::cout << "Add Key and Inverse Add Key verification" << std::endl;
-
-    for( unsigned int i = 0; i < data.size(); ++i )
-    {
-        if( data[ i ] != dataCopy[ i ] )
-        {
-            std::cout << "not equal" << std::endl;
-
-            exit(1);
-        }
-    }
     
-    std::cout << "Verified" << std::endl;
-
-    keyPosition = DataChain( data, keyPosition, key );
-
-    keyPosition = InverseDataChain( data, keyPosition, key );
-
-    std::cout << "Data Chain and Inverse Data Chain verification" << std::endl;
-
-    for( unsigned int i = 0; i < data.size(); ++i )
-    {
-        if( data[ i ] != dataCopy[ i ] )
-        {
-            std::cout << "not equal" << std::endl;
-
-            exit(1);
-        }
-    }
-
-    std::cout << "Verified" << std::endl;
-
-    std::cout << "Whiten and Blacken verification" << std::endl;
-
-    keyPosition = Whiten( data, keyPosition, key );
-
-    Blacken( data, keyPosition, key );
-
-    for( unsigned int i = 0; i < data.size(); ++i )
-    {
-        if( data[ i ] != dataCopy[ i ] )
-        {
-            std::cout << "not equal" << std::endl;
-
-            exit(1);
-        }
-    }
-
-    std::cout << "Verified" << std::endl;
-
-    std::cout << "SubBytes and Inverse SubBytes Verification" << std::endl;
-    
-    keyPosition = SubBytes( data, keyPosition, key );
-
-    InverseSubBytes( data, keyPosition, key );
-
-    for( unsigned int i = 0; i < data.size(); ++i )
-    {
-        if( data[ i ] != dataCopy[ i ] )
-        {
-            std::cout << "not equal" << std::endl;
-
-            exit(1);
-        }
-    }
-
-    std::cout << "Verified" << std::endl;
 }

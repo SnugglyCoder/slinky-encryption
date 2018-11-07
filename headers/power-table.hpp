@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <bitset>
 
 const int powerTableSize = 8 * 256;
 
@@ -2105,11 +2106,15 @@ std::vector< unsigned char > ExpandByte( unsigned char byteValue, unsigned char 
 
 	std::vector< unsigned char > resultBytes( power );
 
+	std::cout << "  result: " <<  std::bitset<64>(result) << std::endl;
+
+	std::cout << " result value: " << result << std::endl;
+
 	// Copy only power bytes from result into the array to return
 	// Without this it will always result in 8x expansion, not desirable
 	for( int i = 0; i < power; ++i )
 	{
-		resultBytes[ power - i ] = ( result >> ( i * 8 ) );
+		resultBytes[ power - i - 1 ] = ( result >> ( i * 8 ) );
 	}
 
 	return resultBytes;
