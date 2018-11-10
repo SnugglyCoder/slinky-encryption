@@ -2100,15 +2100,9 @@ unsigned char FindNthRoot( const uint64_t radicand, const unsigned char original
 // Returns and array of bytes that has size equal to power, which ranges 1-8
 std::vector< unsigned char > ExpandByte( unsigned char byteValue, unsigned char power )
 {
-	//std::cout << "Power is " << (int)power << std::endl;
-
 	uint64_t result = powerTable[ power - 1 ][ byteValue ];
 
 	std::vector< unsigned char > resultBytes( power );
-
-	std::cout << "  result: " <<  std::bitset<64>(result) << std::endl;
-
-	std::cout << " result value: " << result << std::endl;
 
 	// Copy only power bytes from result into the array to return
 	// Without this it will always result in 8x expansion, not desirable

@@ -30,16 +30,26 @@ int AddKey( std::vector< unsigned char >& data, const int keyPosition, const std
 	return ( i + keyPosition ) % key.size();
 }
 
-int InverseAddKey( std::vector< unsigned char >& data, const int keyPosition, const std::vector< unsigned char >& key )
+int InverseAddKey( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
 {
-	int i = 0;
+	int datasize = data.size();
 
-	for( i; i < data.size(); i++ )
+	keyPosition = (keyPosition - datasize);
+
+	while( keyPosition < 0 )
 	{
-		data[ i ] ^= key[ ( keyPosition - i ) % key.size() ];
+		keyPosition += key.size();
 	}
 
-	return ( keyPosition - i ) % key.size();
+	keyPosition %= key.size();
+
+
+	for( int i = 0; i < data.size(); i++ )
+	{
+		data[ i ] ^= key[ ( keyPosition + i ) % key.size() ];
+	}
+
+	return keyPosition;
 }
 
 // XOR the last byte of data with current key byte
@@ -48,7 +58,7 @@ int ForwardChain( std::vector< unsigned char >& data, const int keyPosition, con
 {
 	data[ 0 ] ^= key[ keyPosition ];
 
-	for( int i = 1; i < data.size() - 1; i++ )
+	for( int i = 0; i < data.size() - 1; i++ )
 	{
 		data[ i + 1 ] ^= data[ i ];
 	}
@@ -59,13 +69,13 @@ int ForwardChain( std::vector< unsigned char >& data, const int keyPosition, con
 int InverseForwardChain( std::vector< unsigned char >& data, int keyPosition, const std::vector < unsigned char >& key )
 {
 	keyPosition -= 1;
-
-	for( int i = 0; i < data.size() - 1; ++i )
+	
+	for( int i = data.size() - 1; i > 0; i-- )
 	{
-		data[ i ] ^= data[ i + 1 ];
+		data[ i ] ^= data[ i - 1 ];
 	}
 
-	data[ data.size() - 1 ] ^= key[ keyPosition ];
+	data[ 0 ] ^= key[ keyPosition ];
 
 	return keyPosition;
 }
@@ -226,9 +236,22 @@ int SubBytes( std::vector< unsigned char >& data, int keyPosition, const std::ve
 
 int InverseSubBytes( std::vector< unsigned char >& data, int keyPosition, const std::vector< unsigned char >& key )
 {
+	int datasize = data.size() + 1;
+
+	keyPosition = (keyPosition - datasize);
+
+	while( keyPosition < 0 )
+	{
+		keyPosition += key.size();
+	}
+
+	keyPosition %= key.size();
+
+	int tempKeyPosition = keyPosition;
+
 	for( int i = 0; i < data.size(); ++i )
 	{
-		keyPosition = (keyPosition - 1) % key.size();
+		tempKeyPosition = (tempKeyPosition + 1) % key.size();
 
 		data[ i ] = inverseSbox[ data[ i ] ];
 
@@ -236,14 +259,14 @@ int InverseSubBytes( std::vector< unsigned char >& data, int keyPosition, const 
 
 		unsigned char column = data[ i ] % 16;
 
-		row -= ( key[ keyPosition ] & 0xF0 ) % 16;
+		row -= ( key[ tempKeyPosition ] & 0xF0 ) % 16;
 
-		column -= ( key[ keyPosition ] & 0x0F >> 4 ) % 16;
+		column -= ( key[ tempKeyPosition ] & 0x0F >> 4 ) % 16;
 
 		data[ i ] = row * 16 + column; 
 	}
 
-	return ( keyPosition - 1 ) % key.size();
+	return keyPosition;
 }
 
 std::vector< unsigned char > LoadKey( const std::string& filename )
@@ -528,8 +551,6 @@ std::vector< unsigned char > UnshuffleBits( const std::vector< unsigned char >& 
 
 	keyPosition %= key.size();
 
-	std::cout << keyPosition << std::endl;
-
 	int ile = -1;
 	int ire = (data.size() - 1 ) * 8 + 8;
 	int ilm = ire / 2 + 1;
@@ -573,5 +594,6 @@ std::vector< unsigned char > UnshuffleBits( const std::vector< unsigned char >& 
 
 	return shuffledBits;
 }
+
 
 #endif
