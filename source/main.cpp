@@ -2,19 +2,24 @@
 
 #include <cmath>
 #include <vector>
+#include <sstream>
 #include "../headers/power-table.hpp"
 #include "../headers/slinky-primitives.hpp"
 
 std::vector< unsigned char > SlinkyDecryption( std::vector< unsigned char >& data, const std::vector< unsigned char >& key );
 std::vector< unsigned char > SlinkyEncryption( std::vector< unsigned char >& data, const std::vector< unsigned char >& key );
 
+int rounds;
+
 int main( int argc, char* argv[] )
 {
-    if( argc != 4 )
+    if( argc != 5 )
     {
-        std::cout << "Usage: ./slinky <key> <input> <output>" << std::endl;
+        std::cout << "Usage: ./slinky <key> <input> <output> <number of rounds>" << std::endl;
         exit(1);
     }
+
+    rounds = std::atoi(argv[4]);
 
     InitTable();
 
@@ -24,14 +29,14 @@ int main( int argc, char* argv[] )
 
     std::vector< unsigned char > data;
 
-    for( unsigned int i = 0; i < 1000; i++ )
+    for( unsigned int i = 0; i < 100; i++ )
     {
         data.push_back( fileData[ i ] );
     }
 
     std::vector< unsigned char > dataCopy( data );
 
-    //std::cout << "Encrypting" << std::endl;
+   // std::cout << "Encrypting" << std::endl;
 
     SlinkyEncryption( data, key );
 
@@ -52,74 +57,35 @@ int main( int argc, char* argv[] )
         }
     }
 
-    std::ofstream fileOut( std::string(argv[3]) + std::string(".txt"), std::ios::binary );
+    std::ofstream fileOut( std::string(argv[3]) + std::string("-control.txt") );
 
-    for( unsigned int i = 0; i < encryptedData.size() * 8; i++ )
+    for( unsigned int i = 0; i < encryptedData.size(); i++ )
     {
-        if( encryptedData[ i / 8 ] >> ( i % 8 ) == 0x00 )
-        {
-            fileOut << "0";
-        }
-
-        else
-        {
-            fileOut << "1";
-        }
+        fileOut << std::bitset<8>(encryptedData[i]);
     }
-
-    //std::cout << data.size();
-
+  
     fileOut.close();
 
-    //std::cout << "Success!" << std::endl;
-
-    for( unsigned int bit = 0; bit < data.size(); bit++ )
+    for( int i = 0; i < dataCopy.size(); i++ )
     {
-        data[ bit / 8 ] = data[ bit / 8 ] ^ ( 0x80 >> ( bit % 8 ) );
+        data = dataCopy;
 
-        std::vector< unsigned char > dataCopy2(data);
+        data[ i ] ^= 0x80;
 
         SlinkyEncryption( data, key );
 
-        std::vector< unsigned char > encryptedData( data );
+        std::stringstream filename;
 
-        //std::cout << "Decrypting" << std::endl;
+        filename << argv[3] << "-bit" << i  << ".txt";
 
-        //SlinkyDecryption( data, key );
+        std::ofstream fileOut( filename.str() );
 
-        //std::cout << "Comparing" << std::endl;
-
-        //for( int i = 0; i < data.size(); i++ )
+        for( unsigned int i = 0; i < data.size(); i++ )
         {
-            //if( data[i] != dataCopy2[i])
-            {
-               // std::cout << "Process failed" << std::endl;
-               // exit(1);
-            }
+            fileOut << std::bitset<8>(data[i]);
         }
-
-        std::stringstream fileOutName;
-
-        fileOutName << argv[3] << bit << ".txt";
-
-        std::ofstream fileOut( fileOutName.str(), std::ios::binary );
-
-        for( unsigned int i = 0; i < encryptedData.size() * 8; i++ )
-        {
-            if( encryptedData[ i / 8 ] >> ( i % 8 ) == 0x00 )
-            {
-                fileOut << "0";
-            }
-
-            else
-            {
-                fileOut << "1";
-            }
-        }
-
+    
         fileOut.close();
-
-        data = dataCopy;
     }
 
     return 0;
@@ -129,8 +95,10 @@ int keyPosition = 0;
 
 std::vector< unsigned char > SlinkyEncryption( std::vector< unsigned char >& data, const std::vector< unsigned char >& key )
 {
-    for( unsigned int i = 0; i < 3; ++i )
+    for( unsigned int i = 0; i < rounds; ++i )
     {
+       // std::cout << "Round " << i + 1 << std::endl;
+
         keyPosition = ForwardChain( data, keyPosition, key );
 
         keyPosition = SubBytes( data, keyPosition, key );
@@ -141,25 +109,21 @@ std::vector< unsigned char > SlinkyEncryption( std::vector< unsigned char >& dat
 
         keyPosition = Expand( data, keyPosition, key );
 
-        //std::cout << data.size() << std::endl;
+       // std::cout << data.size() << std::endl;
 
         CompressData( data );
 
-        //std::cout << data.size() << std::endl;
+       // std::cout << data.size() << std::endl;
 
         data = ShuffleBits( data, key, keyPosition );
     }
-
-    std::cout << data.size() << "\n";
 
 	return data;
 }
 
 std::vector< unsigned char > SlinkyDecryption( std::vector< unsigned char >& data, const std::vector< unsigned char >& key )
 {
-	//int keyPosition = 219816;
-
-    for( unsigned int i = 0; i < 3; ++i )
+    for( unsigned int i = 0; i < rounds; ++i )
     {
         data = UnshuffleBits( data, key, keyPosition );
 

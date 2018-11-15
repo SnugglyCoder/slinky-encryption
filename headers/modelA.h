@@ -76,7 +76,7 @@ struct modelA : public model_metrics<CODE_VALUE_, CODE_VALUE_BITS_, FREQUENCY_BI
   }
   virtual void frozen()
   {
-    std::cout << "Frozen at: " << m_bytesProcessed << "\n";
+    //std::cout << "Frozen at: " << m_bytesProcessed << "\n";
   }
   void inline update(int c)
   {
