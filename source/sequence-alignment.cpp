@@ -75,7 +75,8 @@ int main( int argc, char* argv[] ){
   
     if ( argc < 4 ) 
     {
-        std::cout << "usage: ./sequence-alignment <result-file> <control> <testfile> [testfiles]..."
+        std::cout << "usage: ./sequence-alignment <result-file> <control> <testfile> [testfiles]...";
+        exit(1);
     }
 
     vector< string > bitStrings(argc-3);
