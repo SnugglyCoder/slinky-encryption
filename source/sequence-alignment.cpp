@@ -73,6 +73,11 @@ int main( int argc, char* argv[] ){
     int misMatchPenalty = 1; 
     int gapPenalty = 2; 
   
+    if ( argc < 4 ) 
+    {
+        std::cout << "usage: ./sequence-alignment <result-file> <control> <testfile> [testfiles]..."
+    }
+
     vector< string > bitStrings(argc-3);
 
     std::cout << "Loading control" << std::endl;
