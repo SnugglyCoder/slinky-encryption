@@ -15,11 +15,11 @@ int main( int argc, char* argv[] )
 {
     if( argc != 5 )
     {
-        std::cout << "Usage: ./slinky <key> <input> <output> <number of rounds>" << std::endl;
+        std::cout << "Usage: ./slinky <key> <input> <control-output> <bit-output> <number of rounds>" << std::endl;
         exit(1);
     }
 
-    rounds = std::atoi(argv[4]);
+    rounds = std::atoi(argv[5]);
 
     InitTable();
 
@@ -76,7 +76,7 @@ int main( int argc, char* argv[] )
 
         std::stringstream filename;
 
-        filename << argv[3] << "-bit" << i  << ".txt";
+        filename << argv[4] << "-bit" << i  << ".txt";
 
         std::ofstream fileOut( filename.str() );
 
