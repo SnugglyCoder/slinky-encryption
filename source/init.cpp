@@ -49,7 +49,6 @@ int main( int argc, char* argv[] )
 
         SlinkyEncryption( data, key );
 
-        vector< unsigned char > dataCopy( data );
         ofstream resultFile( string( argv[file]) + "-resultfile.csv");
         stringstream control;
         for( unsigned int i = 0; i < data.size(); i++ )
@@ -60,9 +59,9 @@ int main( int argc, char* argv[] )
         int misMatchPenalty = 1; 
         int gapPenalty = 2;
         resultFile << "controlSize," << control.str().size() << endl;
-        for( int i = 0; i < dataCopy.size(); i++ )
+        for( int i = 0; i < fileData.size(); i++ )
         {
-            dataCopy = fileData;
+            vector< unsigned char> dataCopy(fileData);
 
             dataCopy[ i ] ^= 0x80;
 
