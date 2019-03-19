@@ -30,123 +30,54 @@ int main( int argc, char* argv[] )
 //////////////////////////////////////////
 //           Encryption/Decryption      //
 //////////////////////////////////////////
-    if( argc != 6 )
+    if( argc < 4 )
     {
-        cout << "Usage: ./slinky <key> <input> <bit-output> <number of rounds> <testfiles> [testfiles]... " << endl;
+        cout << "Usage: ./slinky <key> <number of rounds> <testfiles> [testfiles]... " << endl;
         exit(1);
     }
 
-    rounds = atoi(argv[5]);
+    rounds = atoi(argv[2]);
 
     InitTable();
 
     vector< unsigned char > key = LoadKey( string( argv[ 1 ] ) );
 
-    vector< unsigned char > fileData = LoadKey( string( argv[ 2 ] ) );
+    for(int file = 3; file < argc; file++){
+        vector< unsigned char > fileData = LoadKey( string( argv[ file ] ) );
 
-    vector< unsigned char > data;
-
-    for( unsigned int i = 0; i < 100; i++ )
-    {
-        data.push_back( fileData[ i ] );
-    }
-
-    vector< unsigned char > dataCopy( data );
-
-   // cout << "Encrypting" << endl;
-
-    SlinkyEncryption( data, key );
-
-    vector< unsigned char > encryptedData( data );
-
-    //cout << "Decrypting" << endl;
-
-    //SlinkyDecryption( data, key );
-
-    //cout << "Comparing" << endl;
-
-    //for( int i = 0; i < data.size(); i++ )
-    {
-        //if( data[i] != dataCopy[i])
-        {
-            //cout << "Process failed" << endl;
-            //exit(1);
-        }
-    }
-
-//    ofstream fileOut( string(argv[3]) + string("-control.txt") );
-    ofstream fileOut( string("control.txt") );
-
-    for( unsigned int i = 0; i < encryptedData.size(); i++ )
-    {
-        fileOut << bitset<8>(encryptedData[i]);
-    }
-  
-    fileOut.close();
-
-    for( int i = 0; i < dataCopy.size(); i++ )
-    {
-        data = dataCopy;
-
-        data[ i ] ^= 0x80;
+        vector< unsigned char > data = fileData;
 
         SlinkyEncryption( data, key );
 
-        stringstream filename;
-
-        filename << argv[3] << "-bit" << i  << ".txt";
-
-        ofstream fileOut( filename.str() );
-
+        vector< unsigned char > dataCopy( data );
+        ofstream resultFile( string( argv[file]) + "-resultfile.csv");
+        stringstream control;
         for( unsigned int i = 0; i < data.size(); i++ )
         {
-            fileOut << bitset<8>(data[i]);
+            control << bitset<8>(data[i]);
         }
-    
-        fileOut.close();
+
+        int misMatchPenalty = 1; 
+        int gapPenalty = 2;
+        resultFile << "controlSize," << control.str().size() << endl;
+        for( int i = 0; i < dataCopy.size(); i++ )
+        {
+            dataCopy = fileData;
+
+            dataCopy[ i ] ^= 0x80;
+
+            SlinkyEncryption( dataCopy, key );
+
+            stringstream bitString;
+
+            for( unsigned int i = 0; i < dataCopy.size(); i++ )
+            {
+                bitString << bitset<8>(dataCopy[i]);
+            }
+            resultFile << bitString.str().size() << "," << getMinimumPenalty(control.str(), bitString.str(), misMatchPenalty, gapPenalty) << "\n";
+
+        }
     }
-
-////////////////////////////////////////
-//         Sequence alignment         //
-////////////////////////////////////////
-
-    int misMatchPenalty = 1; 
-    int gapPenalty = 2; 
-  
-    // if ( argc < 4 ) 
-    // {
-    //     cout << "Usage: ./slinky <key> <input> <bit-output> <number of rounds> <testfiles> [testfiles]..." << endl;
-    //     exit(1);
-    // }
-
-    vector< string > bitStrings(argc-6);
-
-    cout << argc << endl;
-    cout << bitStrings.size() << endl;
-    
-    cout << "Loading control" << endl;
-
-    string control = LoadKeySA( "control.txt" );
-
-    cout << "Loading tests" << endl;
-
-    for(int i = 0; i < bitStrings.size(); i++ )
-    {
-        bitStrings[i] = LoadKeySA(argv[i+6]);
-    }
-
-    cout << "Starting comparision" << endl;
-
-    ofstream resultFile( "result.csv" );
-
-    resultFile << "BitString1,BitString2,Minimum Cost Difference" << endl;
-
-    for( int i = 0; i < bitStrings.size(); i++ )
-    {   
-        resultFile << control.size() << "," << bitStrings[i].size() << "," << getMinimumPenalty(control, bitStrings[i], misMatchPenalty, gapPenalty) << "\n";
-    }
-
-  
     return 0;
 }
 
