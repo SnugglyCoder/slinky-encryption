@@ -1,7 +1,9 @@
 // taken from geeks for geeks
 // CPP program to implement sequence alignment 
 // problem. 
-#include <bits/stdc++.h> 
+
+#include <string>
+#include <iostream>
 #include <vector>
   
 using namespace std; 
@@ -15,57 +17,44 @@ int getMinimumPenalty(string x, string y, int pxy, int pgap)
     int n = y.length(); // length of gene2 
       
     // table for storing optimal substructure answers 
-    vector<vector<int>> dp(m+1, vector<int>(n+1,0));
-  
+    vector<vector<int>> dp(2, vector<int>(n+1,0));
+   
+    /*
+    for( int k = 0; k < m + 1; k++) 
+    {
+        dp[k][0] = k * pgap;
+    }
+    */
+    
+    
+    for( int k = 0; k < n+1; k++)
+    {
+        dp[0][k] = k * pgap;
+    }
+    
+
     // calcuting the minimum penalty 
-    for (i = 1; i <= m; i++) 
+    for (i = 1; i < m+1; i++) 
     { 
-        for (j = 1; j <= n; j++) 
+        dp[i%2][0] = i * pgap;
+
+        for (j = 1; j < n+1; j++) 
         { 
-            if (x[i - 1] == y[j - 1]) 
+            if (x[i-1] == y[j-1]) 
             { 
-                dp[i][j] = dp[i - 1][j - 1]; 
+                dp[i%2][j] = dp[(i - 1)%2][j - 1]; 
             } 
             else
             { 
-                dp[i][j] = min({dp[i - 1][j - 1] + pxy ,  
-                                dp[i - 1][j] + pgap    ,  
-                                dp[i][j - 1] + pgap    }); 
+                dp[i%2][j] = min({dp[(i - 1)%2][j - 1] + pxy ,  
+                                dp[(i - 1)%2][j] + pgap    ,  
+                                dp[i%2][j - 1] + pgap    }); 
             }
         }
     } 
 
-    return dp[m][n];
+    return dp[m%2][n];
 } 
-
-string LoadKey( const std::string& filename )
-{
-	ifstream inputStream( filename, std::ios::binary | std::ios::ate );
-
-	string bytes;
-	
-	bytes.resize( inputStream.tellg() );
-
-	inputStream.seekg( 0 );
-
-	inputStream.read( (char*)&bytes[0], bytes.size() );
-
-	inputStream.close();
-
-	return bytes;
-}
-
-struct ComparisonData
-{
-    int string1Size;
-    int string2Size;
-    int matchCost;
-
-    ComparisonData( int size1, int size2, int cost ) : string1Size(size1), string2Size(size2), matchCost(cost){}
-    ComparisonData(){}
-};
-
-
 
 // Driver code 
 int main( int argc, char* argv[] ){ 
@@ -73,37 +62,66 @@ int main( int argc, char* argv[] ){
     int misMatchPenalty = 1; 
     int gapPenalty = 2; 
   
-    if ( argc < 4 ) 
+    const string test1 = "11111";
+    const string test2 = "00000";
+    const string test3 = "1111111111";
+    const string test4 = "10101";
+
+    bool allPassed = true;
+
+    if( 0 != getMinimumPenalty(test1, test1, misMatchPenalty, gapPenalty) )
     {
-        std::cout << "usage: ./sequence-alignment <result-file> <control> <testfile> [testfiles]...";
-        exit(1);
+        cout << "Failed identical test" << endl;
+
+        allPassed = false;
     }
 
-    vector< string > bitStrings(argc-3);
-
-    std::cout << "Loading control" << std::endl;
-
-    string control = LoadKey( argv[2] );
-
-    std::cout << "Loading tests" << std::endl;
-
-    for(int i = 0; i < bitStrings.size(); i++ )
+    if( test1.size() != getMinimumPenalty(test1, test2, misMatchPenalty, gapPenalty ) )
     {
-        bitStrings[i] = LoadKey(argv[i+3]);
+        cout << "Failed opposite test" << endl;
+
+        allPassed = false;
     }
 
-    std::cout << "Starting comparision" << std::endl;
+    if( test1.size() != getMinimumPenalty(test2, test1, misMatchPenalty, gapPenalty ) )
+    {
+        cout << "Failed reversed opposite test" << endl;
 
-    std::ofstream resultFile( argv[1] );
-
-    resultFile << "BitString1,BitString2,Minimum Cost Difference" << std::endl;
-
-    for( int i = 0; i < bitStrings.size(); i++ )
-    {   
-        resultFile << control.size() << "," << bitStrings[i].size() << "," << getMinimumPenalty(control, bitStrings[i], misMatchPenalty, gapPenalty) << "\n";
+        allPassed = false;
     }
 
-  
+    if( 2 != getMinimumPenalty(test1, test4, misMatchPenalty, gapPenalty) )
+    {
+        cout << "Failed alternating test" << endl;
+
+        allPassed = false;
+    }
+
+    if( 2 != getMinimumPenalty(test4, test1, misMatchPenalty, gapPenalty) )
+    {
+        cout << "Failed reversed alternating test" << endl;
+
+        allPassed = false;
+    }
+
+    if( 10 != getMinimumPenalty(test1, test3, misMatchPenalty, gapPenalty) )
+    {
+        cout << "Failed gap test " << getMinimumPenalty(test1, test3, misMatchPenalty, gapPenalty) << endl;
+
+        allPassed = false;
+    }
+
+    if( 10 != getMinimumPenalty(test3, test1, misMatchPenalty, gapPenalty) )
+    {
+        cout << "Failed gap test " << endl;
+
+        allPassed = false;
+    }
+
+    if( allPassed ) 
+    {
+        cout << "All tests passed" << endl;
+    }
 
     return 0; 
 } 

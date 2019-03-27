@@ -1,5 +1,5 @@
 #include <iostream>
-#include <bits/stdc++.h> 
+#include <bitset> 
 #include <cmath>
 #include <vector>
 #include <sstream>
@@ -24,6 +24,10 @@ struct ComparisonData
 
 int rounds;
 
+const int misMatchPenalty = 1; 
+        
+const int gapPenalty = 2;
+
 int main( int argc, char* argv[] )
 {
     
@@ -43,6 +47,7 @@ int main( int argc, char* argv[] )
     vector< unsigned char > key = LoadKey( string( argv[ 1 ] ) );
 
     for(int file = 3; file < argc; file++){
+
         vector< unsigned char > fileData = LoadKey( string( argv[ file ] ) );
 
         vector< unsigned char > data = fileData;
@@ -50,15 +55,16 @@ int main( int argc, char* argv[] )
         SlinkyEncryption( data, key );
 
         ofstream resultFile( string( argv[file]) + "-resultfile.csv");
+        
         stringstream control;
+        
         for( unsigned int i = 0; i < data.size(); i++ )
         {
             control << bitset<8>(data[i]);
         }
-
-        int misMatchPenalty = 1; 
-        int gapPenalty = 2;
+        
         resultFile << "controlSize," << control.str().size() << endl;
+        
         for( int i = 0; i < fileData.size(); i++ )
         {
             vector< unsigned char> dataCopy(fileData);
@@ -73,8 +79,8 @@ int main( int argc, char* argv[] )
             {
                 bitString << bitset<8>(dataCopy[i]);
             }
+            
             resultFile << bitString.str().size() << "," << getMinimumPenalty(control.str(), bitString.str(), misMatchPenalty, gapPenalty) << "\n";
-
         }
     }
     return 0;
@@ -147,27 +153,43 @@ int getMinimumPenalty(string x, string y, int pxy, int pgap)
     int n = y.length(); // length of gene2 
       
     // table for storing optimal substructure answers 
-    vector<vector<int>> dp(m+1, vector<int>(n+1,0));
-  
+    vector<vector<int>> dp(2, vector<int>(n+1,0));
+   
+    /*
+    for( int k = 0; k < m + 1; k++) 
+    {
+        dp[k][0] = k * pgap;
+    }
+    */
+    
+    
+    for( int k = 0; k < n+1; k++)
+    {
+        dp[0][k] = k * pgap;
+    }
+    
+
     // calcuting the minimum penalty 
-    for (i = 1; i <= m; i++) 
+    for (i = 1; i < m+1; i++) 
     { 
-        for (j = 1; j <= n; j++) 
+        dp[i%2][0] = i * pgap;
+
+        for (j = 1; j < n+1; j++) 
         { 
-            if (x[i - 1] == y[j - 1]) 
+            if (x[i-1] == y[j-1]) 
             { 
-                dp[i][j] = dp[i - 1][j - 1]; 
+                dp[i%2][j] = dp[(i - 1)%2][j - 1]; 
             } 
             else
             { 
-                dp[i][j] = min({dp[i - 1][j - 1] + pxy ,  
-                                dp[i - 1][j] + pgap    ,  
-                                dp[i][j - 1] + pgap    }); 
+                dp[i%2][j] = min({dp[(i - 1)%2][j - 1] + pxy ,  
+                                dp[(i - 1)%2][j] + pgap    ,  
+                                dp[i%2][j - 1] + pgap    }); 
             }
         }
     } 
 
-    return dp[m][n];
+    return dp[m%2][n];
 } 
 
 string LoadKeySA( const string& filename )
