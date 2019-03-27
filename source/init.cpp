@@ -11,16 +11,6 @@ using namespace std;
 vector< unsigned char > SlinkyDecryption( vector< unsigned char >& data, const vector< unsigned char >& key );
 vector< unsigned char > SlinkyEncryption( vector< unsigned char >& data, const vector< unsigned char >& key );
 int getMinimumPenalty(string x, string y, int pxy, int pgap); 
-string LoadKeySA( const string& filename );
-struct ComparisonData
-{
-    int string1Size;
-    int string2Size;
-    int matchCost;
-
-    ComparisonData( int size1, int size2, int cost ) : string1Size(size1), string2Size(size2), matchCost(cost){}
-    ComparisonData(){}
-};
 
 int rounds;
 
@@ -107,11 +97,7 @@ vector< unsigned char > SlinkyEncryption( vector< unsigned char >& data, const v
 
         keyPosition = Expand( data, keyPosition, key );
 
-       // cout << data.size() << endl;
-
         CompressData( data );
-
-       // cout << data.size() << endl;
 
         data = ShuffleBits( data, key, keyPosition );
     }
@@ -154,21 +140,12 @@ int getMinimumPenalty(string x, string y, int pxy, int pgap)
       
     // table for storing optimal substructure answers 
     vector<vector<int>> dp(2, vector<int>(n+1,0));
-   
-    /*
-    for( int k = 0; k < m + 1; k++) 
-    {
-        dp[k][0] = k * pgap;
-    }
-    */
-    
     
     for( int k = 0; k < n+1; k++)
     {
         dp[0][k] = k * pgap;
     }
     
-
     // calcuting the minimum penalty 
     for (i = 1; i < m+1; i++) 
     { 
@@ -191,20 +168,3 @@ int getMinimumPenalty(string x, string y, int pxy, int pgap)
 
     return dp[m%2][n];
 } 
-
-string LoadKeySA( const string& filename )
-{
-	ifstream inputStream( filename, ios::binary | ios::ate );
-
-	string bytes;
-	
-	bytes.resize( inputStream.tellg() );
-
-	inputStream.seekg( 0 );
-
-	inputStream.read( (char*)&bytes[0], bytes.size() );
-
-	inputStream.close();
-
-	return bytes;
-}
